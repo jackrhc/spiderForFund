@@ -19,25 +19,22 @@ public class FundTracker {
 	public FundTracker() {
 		configReader = new ConfigReader();
 		webSpider = new WebSpider(configReader);
-		webPageParser = new WebPageParser(configReader);
+		webPageParser = new WebPageParser();
 		fundHoldings = new FundHoldings(configReader, webSpider, webPageParser);
 	}
 
 	public void init() {
 		if (!configReader.init(CONFIG_DIR)) { return; }
-		
+
 		ArrayList<FundOperationCmd> cmdList = FundOperationCmd.parseFromFile(configReader.getFundOperationCmdFile());
 		fundHoldings.loadFunds(configReader.getFundsListFile());
 		fundHoldings.addOperationCmds(cmdList);
-	}
-
-	public void printToConsole() {
-		System.out.println(fundHoldings);
+		fundHoldings.updateFundHistoryNetValue();
 	}
 
 	public static void main(String[] args) throws InterruptedException {
-		FundTracker m = new FundTracker();
-		m.init();
+		FundTracker tracker = new FundTracker();
+		tracker.init();
 		while (true) {
 			// Thread.sleep(5000);
 		}

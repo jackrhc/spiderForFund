@@ -18,7 +18,7 @@ public class Fund implements Cloneable {
 	private String name = "";
 
 	private String lastestUpdateDate = "2014-12-01"; // 最近一次更新对应日期
-	private Map<String, FundValue> fundValueMap = null; // 时间到基金净值的映射
+	private Map<String, FundDayValue> fundValueMap = null; // 时间到基金净值的映射
 	private ArrayList<FundOperationCmd> operationCmds = null; // 待操作的序列
 	private LinkedList<HoldingValue> holdingValues = null; // 该基金持有的份额数及对应买的时候的净值
 
@@ -29,7 +29,7 @@ public class Fund implements Cloneable {
 	public Fund(String id, String name) {
 		this.id = id;
 		this.name = name;
-		fundValueMap = new HashMap<String, FundValue>();
+		fundValueMap = new HashMap<String, FundDayValue>();
 		operationCmds = new ArrayList<FundOperationCmd>();
 		holdingValues = new LinkedList<HoldingValue>();
 	}
@@ -37,17 +37,17 @@ public class Fund implements Cloneable {
 	public void readNetValueFromFile(String filePath) {
 		ArrayList<String> contents = TextFileManager.readFile(filePath);
 		for (String line : contents) {
-			FundValue value = FundValue.parse(line);
-			fundValueMap.put(value.getDate(), value);
-			if (lastestUpdateDate.compareTo(value.getDate()) < 0) {
-				lastestUpdateDate = value.getDate();
+			FundDayValue value = FundDayValue.parse(line);
+			fundValueMap.put(value.getToday(), value);
+			if (lastestUpdateDate.compareTo(value.getToday()) < 0) {
+				lastestUpdateDate = value.getToday();
 			}
 		}
 	}
 
-	public void writeNetValueToFile(ArrayList<FundValue> values, String filePath) {
+	public void writeNetValueToFile(ArrayList<FundDayValue> values, String filePath) {
 		ArrayList<String> valuesStr = new ArrayList<String>(values.size());
-		for (FundValue value : values) {
+		for (FundDayValue value : values) {
 			valuesStr.add(value.toString());
 		}
 		TextFileManager.writeFile(filePath, valuesStr, true);
@@ -111,25 +111,32 @@ public class Fund implements Cloneable {
 		this.upToNowProfit = upToNowProfit;
 	}
 
-	public void addFundValueList(ArrayList<FundValue> values) {
-		FundValue earliestFundValue = values.get(values.size() - 1);
-		int dayDiff = CalendarConverter.dayDiff(earliestFundValue.getDate(), this.lastestUpdateDate);
+	public void addFundValueList(ArrayList<FundDayValue> values) {
+		FundDayValue earliestFundValue = values.get(values.size() - 1);
+		int dayDiff = CalendarConverter.dayDiff(earliestFundValue.getToday(), this.lastestUpdateDate);
 		if (!(dayDiff > 0 && dayDiff < 10)) {
 			logger.error("diff time error:" + dayDiff);
 			return;
 		}
-		for (FundValue value : values) {
+		for (FundDayValue value : values) {
 			addFundValue(value);
 		}
 	}
 
-	public void addFundValue(FundValue value) {
-		this.fundValueMap.put(value.getDate(), value);
+	/**
+	 * 更新该基金某一天的净值，同时检查是否有指令要执行
+	 * @param value
+	 */
+	public void addFundValue(FundDayValue value) {
+		this.fundValueMap.put(value.getToday(), value);
+		checkOperationCmdsToHandle(value.getToday());
+	}
 
+	private void checkOperationCmdsToHandle(String currentDay) {
 		Iterator<FundOperationCmd> iterator = operationCmds.iterator();
 		while (iterator.hasNext()) {
 			FundOperationCmd cmd = iterator.next();
-			if (cmd.getDate().equals(value.getDate())) {
+			if (cmd.getToday().equals(currentDay)) {
 				handleCmd(cmd);
 				iterator.remove();
 			}
@@ -137,8 +144,8 @@ public class Fund implements Cloneable {
 	}
 
 	private void handleCmd(FundOperationCmd cmd) {
-		FundValue fundValue = fundValueMap.get(cmd.getDate());
-		if (null == fundValue) {
+		FundDayValue todayFundValue = fundValueMap.get(cmd.getToday());
+		if (null == todayFundValue) {
 			logger.error("fundvalue should be exist");
 			return;
 		}
@@ -146,14 +153,21 @@ public class Fund implements Cloneable {
 			double payAmount = cmd.getNum();
 			double charge = payAmount * BUY_RATE;
 			this.upToNowProfit -= charge;
-			HoldingValue holding = HoldingValue.parseFromAmount(cmd.getDate(), payAmount - charge);
-			holding.setValue(fundValue.getNetValue());
+			HoldingValue holding = HoldingValue.parseFromAmount(cmd.getToday(), payAmount - charge);
+			holding.setValue(todayFundValue.getNetValue());
 			this.holdingValues.add(holding);
 		} else if (cmd.getCmdType() == CmdType.DEL_QUANTITY) {
+			double delQuantity = cmd.getNum();
 			Iterator<HoldingValue> iterator = holdingValues.iterator();
 			while (iterator.hasNext()) {
-				HoldingValue value = iterator.next();
+				HoldingValue holding = iterator.next();
+				if (!holding.isUpdate()) continue;
 				
+				if (holding.getQuantity() < delQuantity) {
+					delQuantity -= holding.getQuantity();
+					upToNowProfit += (todayFundValue.getNetValue() - holding.getValue()) * holding.getQuantity();
+					iterator.remove();
+				}
 			}
 		}
 	}

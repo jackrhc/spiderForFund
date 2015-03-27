@@ -31,8 +31,6 @@ public class FundHoldings {
 			String fundId = line.substring(line.length() - 6);
 			fundMap.put(fundId, new Fund(fundId, fundName));
 		}
-
-		updateFundHistoryNetValue();
 	}
 
 	public void addOperationCmds(ArrayList<FundOperationCmd> cmdList) {
@@ -52,7 +50,7 @@ public class FundHoldings {
 		return builder.toString();
 	}
 
-	private void updateFundHistoryNetValue() {
+	public void updateFundHistoryNetValue() {
 		String currentDate = CalendarConverter.getCurrentDate();
 		for (Fund fund : fundMap.values()) {
 			String netValueFilePath = configReader.getFundNetValueDir() + fund.getFileName() + ".txt";
@@ -63,7 +61,7 @@ public class FundHoldings {
 			if (CalendarConverter.dayDiff(currentDate, fund.getLastestUpdateDate()) > 1) {
 				String startDate = CalendarConverter.getAnotherDay(fund.getLastestUpdateDate(), 1);
 				ArrayList<String> contents = spider.crawlingHistoryNetValue(fund.getId(), startDate, currentDate);
-				ArrayList<FundValue> values = pageParser.parseHistoryNetValue(startDate, currentDate, contents);
+				ArrayList<FundDayValue> values = pageParser.parseHistoryNetValue(startDate, currentDate, contents);
 				fund.addFundValueList(values);
 				fund.writeNetValueToFile(values, netValueFilePath);
 			}
