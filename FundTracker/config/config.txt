@@ -1,27 +1,17 @@
-#ÅÀÈ¡µÄÒ³Ãæ
-crawlingUri=http://www.howbuy.com/board/
+#çˆ¬å–çš„é¡µé¢
+crawlingUri=http://jingzhi.funds.hexun.com/DataBase/jzzs.aspx?fundcode={FUND_ID}&startdate={S_DATE}&enddate={D_DATE}
 
-#±£´æÏÂÔØºóµÄÒ³ÃæµÄÏà¶ÔÂ·¾¶
+#ä¿å­˜ä¸‹è½½åŽçš„é¡µé¢çš„ç›¸å¯¹è·¯å¾„
 webpageStoreFile=./data/page.txt
 
-#±£´æ»ù½ð×´Ì¬ÐÅÏ¢µÄÎÄ¼þµÄÏà¶ÔÂ·¾¶
-fundStatusFile=./config/fundStatus.txt
+#ä¿å­˜åŸºé‡‘åŽ†å²å‡€å€¼çš„ç›®å½•
+fundNetValueDir=./data/netvalue/
 
-#´æ´¢»ù½ð²Ù×÷ÃüÁîÁÐ±í
-fundOperationCmdFile=./config/command.txt
+#å­˜å‚¨åŸºé‡‘æ“ä½œåŽ†å²çš„ç›®å½•
+fundOperationDir=./data/operation/
 
-#´æ´¢»ù½ðÀúÊ·¾»ÖµµÄÎÄ¼þ£¨ÒÔ»ù½ðIDÃüÃû£©
-fundHistoryValueDir=./data/historyValue/
+#æ“ä½œæŒ‡ä»¤æ–‡ä»¶
+fundOperationCmdFile=./conf/fundOperationCmd.txt
 
-#Ã¿´Î¶ÁÈ¡ÍøÒ³Ò»ÐÐÊý¾Ý£¬Èç¹ûÒ»ÐÐÖÐ°üº¬ÒÔÏÂÄÚÈÝ£¬ÔòÊÇÐèÒªµÄÄÚÈÝ£¨·´Ö®Ôò·ÏÆú£©
-subStrOfRequiredContent=move(this)
-
-#·Ö¸îÔ­Ê¼µÄÍøÒ³Ò»ÐÐÊý¾Ý£¬ÓÃÓÚ±ã½Ý»ñÈ¡ÐÅÏ¢
-splitRegex=>|<
-
-indexOfFundId=16
-indexOfFundName=24
-indexOfTodayNetValue=30
-indexOfTodayAggregateValue=34
-indexOfYesterdayNetValue=38
-indexOfYesterdayAggregateValue=42
+#æ¯æ¬¡è¯»å–ç½‘é¡µä¸€è¡Œæ•°æ®ï¼Œå¦‚æžœä¸€è¡Œä¸­åŒ…å«ä»¥ä¸‹å†…å®¹ï¼Œåˆ™æ˜¯éœ€è¦çš„å†…å®¹ï¼ˆåä¹‹åˆ™åºŸå¼ƒï¼‰
+subStrOfRequiredContent=<td style="text-align: center;"
